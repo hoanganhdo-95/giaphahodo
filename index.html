@@ -1,16 +1,6 @@
-Để tạo một trang web vẽ gia phả có giao diện kéo thả hoặc tự động kết nối như **draw.io**, bạn có 2 hướng tiếp cận chính:
+Đây là một giải pháp hoàn chỉnh sử dụng thư viện **Balkan FamilyTreeJS**. Thư viện này rất mạnh mẽ, cho phép bạn tạo cây gia phả có thể kéo thả, chỉnh sửa và kết nối tự động giống như các phần mềm chuyên nghiệp.
 
-1.  **Cách đơn giản (Dùng thư viện hỗ trợ sơ đồ):** Sử dụng **Mermaid.js** hoặc **OrgChart**. Cách này giúp bạn tạo nhanh sơ đồ từ dữ liệu văn bản.
-2.  **Cách chuyên nghiệp (Kéo thả như draw.io):** Sử dụng **React Flow** hoặc **LogicFlow**.
-
-Dưới đây, tôi sẽ hướng dẫn bạn tạo một trang web gia phả bằng **Mermaid.js** vì nó cực kỳ nhẹ, dễ nhúng vào GitHub Pages và tự động vẽ các đường nối "Cha -> Con" rất đẹp.
-
-### 1. Ý tưởng thiết kế
-*   **Giao diện:** Bên trái là ô nhập tên (dạng văn bản), bên phải là sơ đồ gia phả hiện ra ngay lập tức.
-*   **Cấu trúc:** Sử dụng quy tắc `Cha --> Con1`, `Cha --> Con2`.
-
-### 2. Mã nguồn mẫu (HTML/Javascript)
-Bạn có thể tạo một file đặt tên là `giapha.html` và dán đoạn code này vào:
+Bạn chỉ cần tạo một file HTML (ví dụ `index.html`) và dán toàn bộ đoạn code dưới đây vào:
 
 ```html
 <!DOCTYPE html>
@@ -18,84 +8,134 @@ Bạn có thể tạo một file đặt tên là `giapha.html` và dán đoạn 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ứng dụng Gia Phả Online</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <title>Trang Web Tạo Gia Phả</title>
+    <!-- Nhúng thư viện FamilyTreeJS -->
+    <script src="https://balkan.app/js/FamilyTree.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
-        header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
-        .container { display: flex; flex: 1; overflow: hidden; }
-        .editor { width: 30%; padding: 20px; background: #f4f4f4; border-right: 1px solid #ccc; display: flex; flex-direction: column; }
-        .viewer { width: 70%; padding: 20px; overflow: auto; display: flex; justify-content: center; }
-        textarea { flex: 1; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ddd; }
-        .hint { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
-        button { margin-top: 10px; padding: 10px; background: #27ae60; color: white; border: none; cursor: pointer; }
-        button:hover { background: #219150; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        #tree {
+            width: 100%;
+            height: 800px; /* Chiều cao của vùng vẽ */
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            padding: 10px;
+            text-align: center;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Gia Phả Dòng Họ</h1>
+    <h1>Hệ Thống Vẽ Gia Phả</h1>
 </header>
 
-<div class="container">
-    <div class="editor">
-        <h3>Nhập thông tin</h3>
-        <p class="hint">Quy tắc: TênCha --> TênCon</p>
-        <textarea id="inputData" placeholder="Ví dụ:&#10;Ông_Nội --> Bố&#10;Bố --> Tôi&#10;Bố --> Em_Gái">
-graph TD
-    Ong_Noi[Ông Nội] --> Bo[Bố]
-    Ong_Noi --> Chu_Ut[Chú Út]
-    Bo --> Toi[Tôi]
-    Bo --> Em_Gai[Em Gái]
-    Chu_Ut --> Anh_Ho[Anh Họ]
-        </textarea>
-        <button onclick="renderChart()">Cập nhật sơ đồ</button>
-    </div>
-    <div class="viewer">
-        <div id="graphCanvas" class="mermaid">
-            <!-- Sơ đồ sẽ vẽ ở đây -->
-        </div>
-    </div>
+<div class="controls">
+    <button onclick="exportData()">Xuất dữ liệu (JSON)</button>
+    <button onclick="importData()">Nhập dữ liệu mẫu</button>
+    <p style="font-size: 12px; color: #666;">Mẹo: Nhấn vào dấu (+) trên thẻ người để thêm con hoặc vợ/chồng.</p>
 </div>
 
+<!-- Khu vực hiển thị cây gia phả -->
+<div id="tree"></div>
+
 <script>
-    mermaid.initialize({ startOnLoad: true });
+    // 1. Dữ liệu mẫu ban đầu (Bạn có thể sửa đổi ở đây)
+    var initialData = [
+        { id: 1, name: "Ông Nội", title: "Trưởng tộc", img: "https://cdn.balkan.app/shared/m3/1.jpg" },
+        { id: 2, pId: 1, name: "Bố", title: "Con trai cả", img: "https://cdn.balkan.app/shared/m3/2.jpg" },
+        { id: 3, pId: 1, name: "Chú Hai", title: "Con trai thứ", img: "https://cdn.balkan.app/shared/m3/3.jpg" },
+        { id: 4, mId: 2, name: "Mẹ", title: "Vợ của Bố", img: "https://cdn.balkan.app/shared/w3/4.jpg" },
+        { id: 5, pId: 2, mId: 4, name: "Tôi (User)", title: "Con trai", img: "https://cdn.balkan.app/shared/m3/5.jpg" },
+        { id: 6, pId: 2, mId: 4, name: "Em Gái", title: "Con gái", img: "https://cdn.balkan.app/shared/w3/6.jpg" }
+    ];
 
-    function renderChart() {
-        const input = document.getElementById('inputData').value;
-        const output = document.getElementById('graphCanvas');
-        
-        // Xóa nội dung cũ
-        output.removeAttribute('data-processed');
-        output.innerHTML = input;
+    // 2. Cấu hình cây gia phả
+    var family = new FamilyTree(document.getElementById("tree"), {
+        template: "olivia", // Giao diện mẫu (có thể đổi thành: base, ana, belinda, v.v.)
+        enableSearch: false,
+        nodeMenu: {
+            details: { text: "Chi tiết" },
+            edit: { text: "Sửa" },
+            add: { text: "Thêm" },
+            remove: { text: "Xóa" }
+        },
+        nodeBinding: {
+            field_0: "name",
+            field_1: "title",
+            img_0: "img"
+        },
+        nodes: initialData
+    });
 
-        // Vẽ lại
-        mermaid.render('theGraph', input, function(svgCode) {
-            output.innerHTML = svgCode;
-        });
+    // 3. Các hàm xử lý sự kiện (Tùy chọn)
+    
+    // Hàm xuất dữ liệu ra console để bạn copy lưu lại
+    function exportData() {
+        var data = family.get();
+        console.log(data);
+        alert("Dữ liệu đã được xuất ra Console (F12). Bạn có thể copy JSON đó để lưu.");
     }
+
+    // Hàm tải lại dữ liệu mẫu
+    function importData() {
+        family.load(initialData);
+    }
+
+    // Sự kiện khi thêm thành viên mới (Tự động gán ID)
+    family.on("add", function (sender, node) {
+        // Logic tự động sinh ID nếu cần, ở đây thư viện đã tự làm khá tốt
+        console.log("Đã thêm thành viên:", node);
+    });
+
+    // Sự kiện khi sửa thành viên
+    family.on("edit", function (sender, node) {
+        console.log("Đã sửa thành viên:", node);
+    });
 </script>
 
 </body>
 </html>
 ```
 
-### 3. Cách hoạt động:
-*   **Quy tắc nối:** Bạn chỉ cần viết theo cú pháp `A --> B`. Mermaid sẽ tự động vẽ mũi tên từ A xuống B.
-*   **Định dạng tên:** Nếu muốn tên có dấu cách, bạn viết: `ID[Tên đầy đủ]`. Ví dụ: `Bo[Nguyễn Văn A] --> Toi[Nguyễn Văn B]`.
-*   **Tự động sắp xếp:** Khác với draw.io bạn phải kéo tay, thư viện này tự tính toán vị trí để các đường nối không bị chồng chéo, giống hệt cấu trúc cây gia đình.
+### Hướng dẫn sử dụng:
 
-### 4. Để trang web này giống draw.io hơn (Tính năng cao cấp)
-Nếu bạn muốn người dùng có thể **cầm chuột kéo các ô** như draw.io, bạn nên sử dụng thư viện **React Flow** (nếu bạn biết về ReactJS) hoặc **Cytoscape.js**:
+1.  **Lưu file:** Copy đoạn code trên, lưu thành file `index.html`.
+2.  **Mở file:** Nhấp đúp vào file `index.html` để mở trên trình duyệt (Chrome, Cốc Cốc, Edge...).
+3.  **Cách vẽ và kết nối:**
+    *   **Thêm con:** Nhấn vào dấu cộng **(+)** màu xanh ở góc dưới thẻ của Bố/Mẹ, chọn "Child" (Con cái).
+    *   **Thêm vợ/chồng:** Nhấn vào dấu cộng **(+)** ở góc dưới thẻ, chọn "Partner" (Vợ/Chồng).
+    *   **Di chuyển:** Bạn có thể dùng chuột kéo cả cây hoặc kéo từng nhánh để sắp xếp lại cho đẹp.
+    *   **Sửa thông tin:** Nhấn vào biểu tượng cây bút để sửa tên, chức vụ, hoặc thay ảnh đại diện.
 
-*   **Cytoscape.js:** Rất mạnh về vẽ sơ đồ quan hệ phức tạp, hỗ trợ kéo thả và tự động tính toán vị trí nút.
-*   **D3.js (Tree Layout):** Đây là tiêu chuẩn vàng để làm gia phả chuyên nghiệp, hỗ trợ thu phóng (zoom), ẩn/hiện các cành trong cây gia đình.
-
-### 5. Cách đưa lên GitHub Pages
-Vì bạn đang có repository `ha-app.github.io`, bạn chỉ cần:
-1. Tạo file `index.html` với nội dung code ở trên.
-2. Upload file đó lên repository của bạn.
-3. Truy cập `https://hoanganhdo-95.github.io/ha-app.github.io/` (hoặc tên tương tự tùy cấu hình) là bạn đã có một trang web vẽ gia phả thực thụ.
-
-Bạn có muốn tôi điều chỉnh thêm tính năng nào (như đổi màu các nút, hay thêm hình ảnh đại diện vào mỗi thành viên) không?
+### Tại sao chọn cách này?
+*   **Không cần code phức tạp:** Thư viện tự động tính toán đường nối từ cha xuống con, bạn không cần vẽ tay từng đường line như draw.io.
+*   **Giao diện đẹp:** Có sẵn các mẫu template (trong code tôi để là "olivia", bạn có thể đổi thành "base", "ana", "mila"...).
+*   **Dữ liệu JSON:** Dữ liệu được lưu dưới dạng JSON rất dễ dàng để đưa lên Github hoặc lưu vào Database sau này.
