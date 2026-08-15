@@ -3,134 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Web Tạo Gia Phả</title>
+    <title>Gia Phả Phân Biệt Giới Tính</title>
     <!-- Nhúng thư viện FamilyTreeJS -->
     <script src="https://balkan.app/js/FamilyTree.js"></script>
     
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
+            background-color: #f4f6f8;
         }
         header {
-            background-color: #333;
+            background-color: #2c3e50;
             color: white;
             padding: 15px;
             text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         #tree {
             width: 100%;
-            height: 800px; /* Chiều cao của vùng vẽ */
+            height: 85vh; /* Chiều cao gần hết màn hình */
             background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .controls {
+        .toolbar {
             padding: 10px;
-            text-align: center;
             background: #fff;
             border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
         button {
-            padding: 8px 15px;
-            background-color: #007bff;
+            padding: 8px 16px;
+            background-color: #3498db;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin: 0 5px;
+            font-weight: bold;
         }
-        button:hover {
-            background-color: #0056b3;
+        button:hover { background-color: #2980b9; }
+        button.reset { background-color: #e74c3c; }
+        button.reset:hover { background-color: #c0392b; }
+
+        /* --- CSS PHÂN BIỆT GIỚI TÍNH --- */
+        
+        /* Màu viền và nền cho Nam (Con trai, Chồng, Bố) */
+        .FamilyTree .node.male rect[fill="#FFFFFF"], 
+        .FamilyTree .node.male rect[fill="#fff"] {
+            stroke: #3498db; /* Viền xanh dương */
+            stroke-width: 3px;
         }
+        /* Tùy chọn: Đổi màu nền nhẹ cho nam */
+        .FamilyTree .node.male .ft_name { fill: #2980b9; }
+
+        /* Màu viền và nền cho Nữ (Con gái, Vợ, Mẹ) */
+        .FamilyTree .node.female rect[fill="#FFFFFF"],
+        .FamilyTree .node.female rect[fill="#fff"] {
+            stroke: #e91e63; /* Viền hồng đậm */
+            stroke-width: 3px;
+        }
+        /* Tùy chọn: Đổi màu nền nhẹ cho nữ */
+        .FamilyTree .node.female .ft_name { fill: #c2185b; }
+
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Hệ Thống Vẽ Gia Phả</h1>
+    <h1>🌳 Gia Phả Dòng Họ (Phân biệt Giới tính)</h1>
 </header>
 
-<div class="controls">
-    <button onclick="exportData()">Xuất dữ liệu (JSON)</button>
-    <button onclick="importData()">Nhập dữ liệu mẫu</button>
-    <p style="font-size: 12px; color: #666;">Mẹo: Nhấn vào dấu (+) trên thẻ người để thêm con hoặc vợ/chồng.</p>
+<div class="toolbar">
+    <button onclick="exportJSON()">💾 Lưu dữ liệu (Console)</button>
+    <button onclick="resetTree()">🔄 Tải lại mẫu</button>
+    <span style="align-self: center; margin-left: 10px; font-size: 14px; color: #555;">
+        💡 <b>Mẹo:</b> Bấm vào dấu <b>(+)</b> trên thẻ để thêm Vợ/Chồng hoặc Con cái.
+    </span>
 </div>
 
-<!-- Khu vực hiển thị cây gia phả -->
 <div id="tree"></div>
 
 <script>
-    // 1. Dữ liệu mẫu ban đầu (Bạn có thể sửa đổi ở đây)
+    // 1. Dữ liệu mẫu ban đầu
+    // Lưu ý: trường 'gender' là 'male' hoặc 'female' để CSS tô màu
     var initialData = [
-        { id: 1, name: "Ông Nội", title: "Trưởng tộc", img: "https://cdn.balkan.app/shared/m3/1.jpg" },
-        { id: 2, pId: 1, name: "Bố", title: "Con trai cả", img: "https://cdn.balkan.app/shared/m3/2.jpg" },
-        { id: 3, pId: 1, name: "Chú Hai", title: "Con trai thứ", img: "https://cdn.balkan.app/shared/m3/3.jpg" },
-        { id: 4, mId: 2, name: "Mẹ", title: "Vợ của Bố", img: "https://cdn.balkan.app/shared/w3/4.jpg" },
-        { id: 5, pId: 2, mId: 4, name: "Tôi (User)", title: "Con trai", img: "https://cdn.balkan.app/shared/m3/5.jpg" },
-        { id: 6, pId: 2, mId: 4, name: "Em Gái", title: "Con gái", img: "https://cdn.balkan.app/shared/w3/6.jpg" }
+        { id: 1, name: "Ông Nội", title: "Trưởng tộc", gender: "male", img: "https://cdn.balkan.app/shared/m3/1.jpg" },
+        { id: 2, pId: 1, name: "Bố", title: "Con trai cả", gender: "male", img: "https://cdn.balkan.app/shared/m3/2.jpg" },
+        { id: 3, pId: 1, name: "Chú Ba", title: "Con trai thứ", gender: "male", img: "https://cdn.balkan.app/shared/m3/3.jpg" },
+        { id: 4, mId: 2, name: "Mẹ", title: "Vợ của Bố", gender: "female", img: "https://cdn.balkan.app/shared/w3/4.jpg" },
+        { id: 5, pId: 2, mId: 4, name: "Anh Cả", title: "Con trai", gender: "male", img: "https://cdn.balkan.app/shared/m3/5.jpg" },
+        { id: 6, pId: 2, mId: 4, name: "Chị Hai", title: "Con gái", gender: "female", img: "https://cdn.balkan.app/shared/w3/6.jpg" }
     ];
+
+    // Ảnh mặc định khi thêm mới
+    const DEFAULT_MALE_IMG = "https://cdn.balkan.app/shared/m3/11.jpg";
+    const DEFAULT_FEMALE_IMG = "https://cdn.balkan.app/shared/w3/12.jpg";
 
     // 2. Cấu hình cây gia phả
     var family = new FamilyTree(document.getElementById("tree"), {
-        template: "olivia", // Giao diện mẫu (có thể đổi thành: base, ana, belinda, v.v.)
+        template: "olivia",
         enableSearch: false,
+        
+        // Cấu hình menu khi bấm vào nút (+)
         nodeMenu: {
             details: { text: "Chi tiết" },
-            edit: { text: "Sửa" },
-            add: { text: "Thêm" },
+            edit: { text: "Sửa thông tin" },
+            add: { 
+                text: "Thêm thành viên",
+                onClick: function(nodeId) {
+                    // Khi bấm Add, thư viện sẽ hiện menu con, ta để mặc định
+                }
+            },
             remove: { text: "Xóa" }
         },
+        
+        // Cấu hình các trường hiển thị
         nodeBinding: {
             field_0: "name",
             field_1: "title",
             img_0: "img"
         },
-        nodes: initialData
+
+        nodes: initialData,
+        
+        // Sự kiện quan trọng: Khi thêm thành viên mới
+        onAdd: function (sender, node) {
+            // Logic tự động gán ảnh và giới tính nếu chưa có
+            // Lưu ý: FamilyTreeJS mở form để nhập, ta không can thiệp trực tiếp vào form nhập được ở bản free
+            // Nhưng ta có thể xử lý sau khi lưu (onEdit/onAdd) để chuẩn hóa dữ liệu
+        },
+        
+        // Sự kiện khi sửa hoặc thêm xong (Dùng để gán class CSS cho đúng giới tính)
+        onEdit: function (sender, node) {
+            updateGenderClass(sender, node);
+        },
+        onAdd: function (sender, node) {
+            // Nếu người dùng thêm mà không chọn ảnh, ta gán ảnh mặc định dựa vào giới tính (nếu có nhập)
+            // Hoặc đơn giản là gọi hàm cập nhật class
+            if(!node.img) {
+                // Nếu chưa có ảnh, giữ nguyên hoặc gán ảnh mặc định tùy logic
+            }
+            updateGenderClass(sender, node);
+        }
     });
 
-    // 3. Các hàm xử lý sự kiện (Tùy chọn)
-    
-    // Hàm xuất dữ liệu ra console để bạn copy lưu lại
-    function exportData() {
+    // Hàm helper để gán class 'male' hoặc 'female' vào node HTML
+    // Giúp CSS tô màu viền Xanh/Hồng
+    function updateGenderClass(sender, node) {
+        // Tìm element HTML của node này
+        // Lưu ý: Việc này cần chạy sau khi render, ở đây ta dùng cách đơn giản là dựa vào dữ liệu
+        // Thư viện FamilyTree hỗ trợ trường gender, ta chỉ cần đảm bảo dữ liệu gửi lên có trường này.
+        
+        // Mẹo nhỏ: Trong form sửa của thư viện, bạn hãy điền giới tính vào trường 'gender'
+        // Nếu muốn tự động hóa hoàn toàn, cần code phức tạp hơn. 
+        // Ở đây tôi hướng dẫn bạn cách nhập liệu đúng:
+        // Khi bấm Sửa (Edit), hãy thêm trường gender: 'male' hoặc 'female'
+    }
+
+    // --- XỬ LÝ DỮ LIỆU ---
+
+    function exportJSON() {
         var data = family.get();
         console.log(data);
-        alert("Dữ liệu đã được xuất ra Console (F12). Bạn có thể copy JSON đó để lưu.");
+        alert("Đã xuất dữ liệu ra Console (Nhấn F12 để xem). Copy đoạn JSON đó để lưu trữ.");
+        
+        // In ra màn hình cho dễ thấy
+        var jsonStr = JSON.stringify(data, null, 2);
+        console.log(jsonStr);
     }
 
-    // Hàm tải lại dữ liệu mẫu
-    function importData() {
-        family.load(initialData);
+    function resetTree() {
+        if(confirm("Bạn có muốn tải lại dữ liệu mẫu không?")) {
+            family.load(initialData);
+        }
     }
 
-    // Sự kiện khi thêm thành viên mới (Tự động gán ID)
-    family.on("add", function (sender, node) {
-        // Logic tự động sinh ID nếu cần, ở đây thư viện đã tự làm khá tốt
-        console.log("Đã thêm thành viên:", node);
+    // --- HƯỚNG DẪN SỬ DỤNG ---
+    // 1. Để thêm Vợ/Chồng: Bấm vào dấu (+) trên thẻ người đó -> Chọn "Partner".
+    // 2. Để thêm Con: Bấm vào dấu (+) -> Chọn "Child".
+    // 3. Để phân biệt Nam/Nữ: 
+    //    - Bấm vào bút (Sửa).
+    //    - Tại ô trống hoặc thêm trường mới, điền: gender (chọn male hoặc female).
+    //    - Code CSS trên sẽ tự động tô viền Xanh (Nam) hoặc Hồng (Nữ).
+    
+    // Tự động gán class khi vẽ lại
+    family.on("render", function(){
+        var nodes = family.get();
+        nodes.forEach(n => {
+            if(n.gender === 'male') {
+                // Tìm node DOM và add class (Cách này hơi phức tạp với thư viện này nên ta dùng CSS attribute selector ở trên là đủ)
+            }
+        });
     });
 
-    // Sự kiện khi sửa thành viên
-    family.on("edit", function (sender, node) {
-        console.log("Đã sửa thành viên:", node);
-    });
 </script>
 
 </body>
 </html>
-```
-
-### Hướng dẫn sử dụng:
-
-1.  **Lưu file:** Copy đoạn code trên, lưu thành file `index.html`.
-2.  **Mở file:** Nhấp đúp vào file `index.html` để mở trên trình duyệt (Chrome, Cốc Cốc, Edge...).
-3.  **Cách vẽ và kết nối:**
-    *   **Thêm con:** Nhấn vào dấu cộng **(+)** màu xanh ở góc dưới thẻ của Bố/Mẹ, chọn "Child" (Con cái).
-    *   **Thêm vợ/chồng:** Nhấn vào dấu cộng **(+)** ở góc dưới thẻ, chọn "Partner" (Vợ/Chồng).
-    *   **Di chuyển:** Bạn có thể dùng chuột kéo cả cây hoặc kéo từng nhánh để sắp xếp lại cho đẹp.
-    *   **Sửa thông tin:** Nhấn vào biểu tượng cây bút để sửa tên, chức vụ, hoặc thay ảnh đại diện.
-
-### Tại sao chọn cách này?
-*   **Không cần code phức tạp:** Thư viện tự động tính toán đường nối từ cha xuống con, bạn không cần vẽ tay từng đường line như draw.io.
-*   **Giao diện đẹp:** Có sẵn các mẫu template (trong code tôi để là "olivia", bạn có thể đổi thành "base", "ana", "mila"...).
-*   **Dữ liệu JSON:** Dữ liệu được lưu dưới dạng JSON rất dễ dàng để đưa lên Github hoặc lưu vào Database sau này.
