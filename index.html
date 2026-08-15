@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Web Tạo Gia Phả</title>
+    <!-- Nhúng thư viện FamilyTreeJS -->
+    <script src="https://balkan.app/js/FamilyTree.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        #tree {
+            width: 100%;
+            height: 800px; /* Chiều cao của vùng vẽ */
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            padding: 10px;
+            text-align: center;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Hệ Thống Vẽ Gia Phả</h1>
+</header>
+
+<div class="controls">
+    <button onclick="exportData()">Xuất dữ liệu (JSON)</button>
+    <button onclick="importData()">Nhập dữ liệu mẫu</button>
+    <p style="font-size: 12px; color: #666;">Mẹo: Nhấn vào dấu (+) trên thẻ người để thêm con hoặc vợ/chồng.</p>
+</div>
+
+<!-- Khu vực hiển thị cây gia phả -->
+<div id="tree"></div>
+
+<script>
+    // 1. Dữ liệu mẫu ban đầu (Bạn có thể sửa đổi ở đây)
+    var initialData = [
+        { id: 1, name: "Ông Nội", title: "Trưởng tộc", img: "https://cdn.balkan.app/shared/m3/1.jpg" },
+        { id: 2, pId: 1, name: "Bố", title: "Con trai cả", img: "https://cdn.balkan.app/shared/m3/2.jpg" },
+        { id: 3, pId: 1, name: "Chú Hai", title: "Con trai thứ", img: "https://cdn.balkan.app/shared/m3/3.jpg" },
+        { id: 4, mId: 2, name: "Mẹ", title: "Vợ của Bố", img: "https://cdn.balkan.app/shared/w3/4.jpg" },
+        { id: 5, pId: 2, mId: 4, name: "Tôi (User)", title: "Con trai", img: "https://cdn.balkan.app/shared/m3/5.jpg" },
+        { id: 6, pId: 2, mId: 4, name: "Em Gái", title: "Con gái", img: "https://cdn.balkan.app/shared/w3/6.jpg" }
+    ];
+
+    // 2. Cấu hình cây gia phả
+    var family = new FamilyTree(document.getElementById("tree"), {
+        template: "olivia", // Giao diện mẫu (có thể đổi thành: base, ana, belinda, v.v.)
+        enableSearch: false,
+        nodeMenu: {
+            details: { text: "Chi tiết" },
+            edit: { text: "Sửa" },
+            add: { text: "Thêm" },
+            remove: { text: "Xóa" }
+        },
+        nodeBinding: {
+            field_0: "name",
+            field_1: "title",
+            img_0: "img"
+        },
+        nodes: initialData
+    });
+
+    // 3. Các hàm xử lý sự kiện (Tùy chọn)
+    
+    // Hàm xuất dữ liệu ra console để bạn copy lưu lại
+    function exportData() {
+        var data = family.get();
+        console.log(data);
+        alert("Dữ liệu đã được xuất ra Console (F12). Bạn có thể copy JSON đó để lưu.");
+    }
+
+    // Hàm tải lại dữ liệu mẫu
+    function importData() {
+        family.load(initialData);
+    }
+
+    // Sự kiện khi thêm thành viên mới (Tự động gán ID)
+    family.on("add", function (sender, node) {
+        // Logic tự động sinh ID nếu cần, ở đây thư viện đã tự làm khá tốt
+        console.log("Đã thêm thành viên:", node);
+    });
+
+    // Sự kiện khi sửa thành viên
+    family.on("edit", function (sender, node) {
+        console.log("Đã sửa thành viên:", node);
+    });
+</script>
+
+</body>
+</html>
